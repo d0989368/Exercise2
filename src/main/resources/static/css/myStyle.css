@@ -11,16 +11,15 @@ html, body {
 .form-signin {
 	color: #f29f04;
 	width: 100%;
-	max-width: 400px; /* 增加表单的最大宽度 */
-	padding: 50px; /* 增加内边距 */
+	max-width: 400px; 
+	padding: 50px; 
 	background: #808080;
 	border-radius: 10px;
 	box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
 	margin: auto;
 	display: flex;
 	flex-direction: column;
-	align-items: center; /* 中央对齐 */
-}
+	align-items: center; 
 
 .form-signin h1 {
 	margin-bottom: 2rem;
@@ -28,7 +27,7 @@ html, body {
 }
 
 .form-floating {
-	width: 100%; /* 确保浮动表单项的宽度 */
+	width: 100%; 
 	margin-bottom: 1rem;
 }
 

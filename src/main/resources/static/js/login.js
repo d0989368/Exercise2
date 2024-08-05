@@ -5,8 +5,8 @@ function login() {
     $.ajax({
         type: "POST",
         url: "/demo/login",
-        contentType: "application/json", // 设置内容类型为JSON
-        dataType: "json", // 期望返回JSON格式
+        contentType: "application/json", 
+        dataType: "json", 
         data: JSON.stringify({ username: username, password: password }),
         success: function(response) {
             if (response.status === "success") {

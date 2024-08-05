@@ -20,7 +20,6 @@ public class DemoApplication {
     public CommandLineRunner demo(UserRepository userRepository) {
         return (args) -> {
             if (userRepository.count() == 0) {
-                // 插入假用戶
                 userRepository.save(new User(null,"admin","666"));
             }
         };
