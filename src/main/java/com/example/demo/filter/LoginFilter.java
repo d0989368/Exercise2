@@ -2,11 +2,8 @@ package com.example.demo.filter;
 
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Component;
 
 import com.example.demo.model.User;
 import com.example.demo.service.UserService;
@@ -20,70 +17,71 @@ import jakarta.servlet.ServletResponse;
 import jakarta.servlet.annotation.WebFilter;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 
-//@Component
-@WebFilter("/success")
+@WebFilter("/*")
 public class LoginFilter implements Filter {
 
-    @Autowired
-    private UserService userService;
+	@Autowired
+	private UserService userService;
 
-    private static final List<String> ALLOWED_URLS = Arrays.asList(
-            "/demo/login",
-            "/css/",
-            "/js/",
-            "/h2-console",
-            "/h2-console/*"
-    );
+	@Override
+	public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
+			throws IOException, ServletException {
+		HttpServletRequest req = (HttpServletRequest) request;
+		HttpServletResponse res = (HttpServletResponse) response;
 
-    private boolean allowedRequest(String uri) {
-        return ALLOWED_URLS.stream().anyMatch(uri::startsWith);
-    }
+		String uri = req.getRequestURI();
+		String method = req.getMethod();
+		String contextPath = req.getContextPath();
 
-    @Override
-    public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
-            throws IOException, ServletException {
-        HttpServletRequest req = (HttpServletRequest) request;
-        HttpServletResponse res = (HttpServletResponse) response;
+		if ((contextPath + "/login").equals(uri)) {
+			if ("POST".equalsIgnoreCase(method)) {
+				handleLogin(req, res);
+			} else {
+				chain.doFilter(request, response);
+			}
+		} else {
+			if (userNotLoggedIn(req) && (contextPath + "/success").equals(uri)) {
+				res.sendRedirect((contextPath + "/login"));
+			} else {
+				chain.doFilter(request, response);
+			}
+		}
+	}
 
-        String uri = req.getRequestURI();
-        String method = req.getMethod();
+	private boolean userNotLoggedIn(HttpServletRequest req) {
+		HttpSession session = req.getSession(false);
+		if (session == null) {
+			return true;
+		}
+		return session.getAttribute("user") == null;
+	}
 
-        if (!allowedRequest(uri)) {
-            User sessionUser = (User) req.getSession().getAttribute("user");
+	private void handleLogin(HttpServletRequest req, HttpServletResponse res) throws IOException {
+		User user = parseRequestBody(req);
+		if (user != null && userService.validateUser(user)) {
+			req.getSession().setAttribute("user", user);
+			writeResponse(res, HttpServletResponse.SC_OK, "{\"status\": \"success\"}");
+		} else {
+			writeResponse(res, HttpServletResponse.SC_UNAUTHORIZED,
+					"{\"status\": \"error\", \"message\": \"Invalid credentials\"}");
+		}
+	}
 
-            if (sessionUser == null) {
-                if ("/demo/login".equals(uri) && "POST".equalsIgnoreCase(method)) {
-                    StringBuilder sb = new StringBuilder();
-                    String line;
-                    BufferedReader reader = req.getReader();
-                    while ((line = reader.readLine()) != null) {
-                        sb.append(line);
-                    }
-                    String body = sb.toString();
+	private User parseRequestBody(HttpServletRequest req) throws IOException {
+		StringBuilder sb = new StringBuilder();
+		String line;
+		BufferedReader reader = req.getReader();
+		while ((line = reader.readLine()) != null) {
+			sb.append(line);
+		}
+		return new ObjectMapper().readValue(sb.toString(), User.class);
+	}
 
-                    ObjectMapper mapper = new ObjectMapper();
-                    User user = mapper.readValue(body, User.class);
-
-                    if (userService.validateUser(user)) {
-                        req.getSession().setAttribute("user", user);
-                        res.setStatus(HttpServletResponse.SC_OK);
-                        res.setContentType("application/json");
-                        res.getWriter().write("{\"status\": \"success\"}");
-                        return;
-                    } else {
-                        res.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                        res.setContentType("application/json");
-                        res.getWriter().write("{\"status\": \"error\", \"message\": \"Invalid credentials\"}");
-                        return;
-                    }
-                } else {
-                    res.sendRedirect("/demo/error");
-                    return;
-                }
-            }
-        }
-
-        chain.doFilter(request, response);
-    }
+	private void writeResponse(HttpServletResponse res, int status, String body) throws IOException {
+		res.setStatus(status);
+		res.setContentType("application/json");
+		res.getWriter().write(body);
+	}
 }

@@ -20,7 +20,7 @@ public class LoginController {
 
 	@Autowired
 	private UserService userService;
-	
+
     @GetMapping("/login")
     public String login(HttpSession session) {
     	session.invalidate();
@@ -32,7 +32,7 @@ public class LoginController {
         Map<String, String> response = new HashMap<>();
         
         if (userService.validateUser(user)) {
-            session.setAttribute("user", user);
+            //session.setAttribute("user", user);
             response.put("status", "success");
             return ResponseEntity.ok(response);
         } else {
