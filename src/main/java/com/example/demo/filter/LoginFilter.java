@@ -35,6 +35,14 @@ public class LoginFilter implements Filter {
 		String method = req.getMethod();
 		String contextPath = req.getContextPath();
 
+		boolean isStaticResource = uri.startsWith(contextPath + "/static/") || uri.endsWith(".css")
+				|| uri.endsWith(".js") || uri.endsWith(".png") || uri.endsWith(".jpg") || uri.endsWith(".gif");
+		
+		if (isStaticResource) {
+			chain.doFilter(request, response);
+			return;
+		}
+
 		if ((contextPath + "/login").equals(uri)) {
 			if ("POST".equalsIgnoreCase(method)) {
 				handleLogin(req, res);
@@ -42,8 +50,8 @@ public class LoginFilter implements Filter {
 				chain.doFilter(request, response);
 			}
 		} else {
-			if (userNotLoggedIn(req) && (contextPath + "/success").equals(uri)) {
-				res.sendRedirect((contextPath + "/login"));
+			if (userNotLoggedIn(req)) {
+				res.sendRedirect(contextPath + "/login");
 			} else {
 				chain.doFilter(request, response);
 			}
@@ -51,11 +59,7 @@ public class LoginFilter implements Filter {
 	}
 
 	private boolean userNotLoggedIn(HttpServletRequest req) {
-		HttpSession session = req.getSession(false);
-		if (session == null) {
-			return true;
-		}
-		return session.getAttribute("user") == null;
+		return req.getSession().getAttribute("user") == null;
 	}
 
 	private void handleLogin(HttpServletRequest req, HttpServletResponse res) throws IOException {

@@ -18,9 +18,6 @@ import jakarta.servlet.http.HttpSession;
 @Controller
 public class LoginController {
 
-	@Autowired
-	private UserService userService;
-
     @GetMapping("/login")
     public String login(HttpSession session) {
     	session.invalidate();
@@ -31,8 +28,7 @@ public class LoginController {
     public ResponseEntity<Map<String, String>> login(@RequestBody User user, HttpSession session) {
         Map<String, String> response = new HashMap<>();
         
-        if (userService.validateUser(user)) {
-            //session.setAttribute("user", user);
+        if (user != null) {
             response.put("status", "success");
             return ResponseEntity.ok(response);
         } else {
@@ -48,8 +44,8 @@ public class LoginController {
         return "success";
     }
     
-    @GetMapping("/error")
-    public String handleError() {
-        return "error";
-    }
+//    @GetMapping("/abc")
+//    public String handleError() {
+//        return "success";
+//    }
 }
